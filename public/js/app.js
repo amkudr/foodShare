@@ -52,9 +52,12 @@ function createFoodElement(food) {
     
     const timeAgo = getTimeAgo(new Date(food.createdAt));
     
+    // Use address if available, otherwise show coordinates
+    const locationText = food.address || `${food.location.coordinates[1]}, ${food.location.coordinates[0]}`;
+    
     foodElement.innerHTML = `
         <h3>${escapeHtml(food.name)}</h3>
-        <div class="food-meta">📍 ${escapeHtml(food.location)} • ${timeAgo}</div>
+        <div class="food-meta">📍 ${escapeHtml(locationText)} • ${timeAgo}</div>
         <div class="food-description">${escapeHtml(food.description)}</div>
         <div class="food-actions">
             <button class="contact-btn" onclick="contactOwner('${escapeHtml(food.contact)}')">Contact</button>
@@ -67,35 +70,46 @@ function createFoodElement(food) {
 
 // Toggle add food form visibility
 function toggleAddForm() {
-    const form = document.getElementById('addFoodForm');
-    form.classList.toggle('active');
-    
-    // Clear form when closing
-    if (!form.classList.contains('active')) {
-        document.getElementById('addFoodForm').querySelector('form').reset();
+    const modal = document.getElementById("addFoodModal");
+    if (modal.style.display === "block") {
+        modal.style.display = "none";
+        // Clear form when closing
+        document.querySelector('#addFoodModal form').reset();
         clearAlert();
+    } else {
+        modal.style.display = "block";
     }
 }
+
+// Close the modal when clicking outside of it
+window.onclick = function(event) {
+    const modal = document.getElementById("addFoodModal");
+    if (event.target === modal) {
+        modal.style.display = "none";
+    }
+};
 
 // Add new food item
 async function addFood(event) {
     event.preventDefault();
-    
+
     try {
         // Get form data
         const foodData = {
             name: document.getElementById('foodName').value.trim(),
             location: document.getElementById('location').value.trim(),
             contact: document.getElementById('contact').value.trim(),
-            description: document.getElementById('description').value.trim()
+            description: document.getElementById('description').value.trim(),
+            latitude: parseFloat(document.getElementById('latitude').value),
+            longitude: parseFloat(document.getElementById('longitude').value)
         };
-        
+
         // Validate form data
-        if (!foodData.name || !foodData.location || !foodData.contact) {
-            showAlert('Please fill in all required fields.', 'error');
+        if (!foodData.name || !foodData.location || !foodData.contact || isNaN(foodData.latitude) || isNaN(foodData.longitude)) {
+            showAlert('Please fill in all required fields including coordinates.', 'error');
             return;
         }
-        
+
         // Send to server
         const response = await fetch(`${API_BASE_URL}/food-items`, {
             method: 'POST',
@@ -104,28 +118,27 @@ async function addFood(event) {
             },
             body: JSON.stringify(foodData)
         });
-        
+
         if (!response.ok) {
-            throw new Error('Failed to add food item');
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to add food item');
         }
-        
+
         const newFood = await response.json();
-        
-        // Add to display
-        const foodGrid = document.getElementById('foodGrid');
-        const foodElement = createFoodElement(newFood);
-        foodGrid.insertBefore(foodElement, foodGrid.firstChild);
-        
-        // Reset form and hide it
+
+        // Reload all food items to ensure proper display
+        await loadFoodItems();
+
+        // Reset form and hide modal
         event.target.reset();
         toggleAddForm();
-        
+
         // Show success message
         showAlert('Food item shared successfully! 🎉', 'success');
-        
+
     } catch (error) {
         console.error('Error adding food:', error);
-        showAlert('Failed to share food item. Please try again.', 'error');
+        showAlert(error.message || 'Failed to share food item. Please try again.', 'error');
     }
 }
 
@@ -168,26 +181,16 @@ function contactOwner(contact) {
 // Show/hide loading indicator
 function showLoading(show) {
     const loading = document.getElementById('loading');
-    if (show) {
-        loading.classList.remove('hidden');
-    } else {
-        loading.classList.add('hidden');
+    if (loading) {
+        if (show) {
+            loading.classList.remove('hidden');
+            loading.style.display = 'block';
+        } else {
+            loading.classList.add('hidden');
+            loading.style.display = 'none';
+        }
     }
 }
-
-function toggleAddForm() {
-    const modal = document.getElementById("addFoodModal");
-    modal.style.display = (modal.style.display === "block") ? "none" : "block";
-}
-
-// Close the modal when clicking outside of it
-window.onclick = function(event) {
-    const modal = document.getElementById("addFoodModal");
-    if (event.target === modal) {
-        modal.style.display = "none";
-    }
-};
-
 
 // Show alert message
 function showAlert(message, type = 'success') {
@@ -197,6 +200,13 @@ function showAlert(message, type = 'success') {
     const alertDiv = document.createElement('div');
     alertDiv.className = `alert alert-${type}`;
     alertDiv.textContent = message;
+    alertDiv.style.cssText = `
+        padding: 10px 20px;
+        margin: 10px 0;
+        border-radius: 5px;
+        text-align: center;
+        ${type === 'success' ? 'background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb;' : 'background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;'}
+    `;
     
     // Insert after hero section
     const hero = document.querySelector('.hero');
@@ -234,6 +244,7 @@ function getTimeAgo(timestamp) {
 
 // Escape HTML to prevent XSS
 function escapeHtml(unsafe) {
+    if (!unsafe) return '';
     return unsafe
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")

@@ -63,41 +63,56 @@ app.get('/api/food-items/:id', async (req, res) => {
 // Create new food item
 app.post('/api/food-items', async (req, res) => {
     try {
-        const { name, location, contact, description } = req.body;
-        
-        // Validation
-        if (!name || !location || !contact) {
-            return res.status(400).json({ 
-                error: 'Missing required fields: name, location, and contact are required' 
+        const { name, location, contact, description, latitude, longitude } = req.body;
+
+        // Validation - handle both formats (coordinates array or separate lat/lng)
+        let coordinates;
+        if (location && location.coordinates && Array.isArray(location.coordinates)) {
+            coordinates = location.coordinates;
+        } else if (latitude !== undefined && longitude !== undefined) {
+            coordinates = [longitude, latitude]; // GeoJSON format: [lng, lat]
+        } else {
+            return res.status(400).json({
+                error: 'Missing coordinates: provide either location.coordinates or latitude/longitude'
             });
         }
-        
+
+        if (!name || !contact || coordinates.length !== 2) {
+            return res.status(400).json({
+                error: 'Missing required fields: name, contact, and valid coordinates are required'
+            });
+        }
+
         // Create new food item
         const foodItem = new FoodItem({
             name: name.trim(),
-            location: location.trim(),
+            location: {
+                type: 'Point',
+                coordinates: coordinates
+            },
+            address: location || '', // Use location string as address if provided
             contact: contact.trim(),
             description: description ? description.trim() : ''
         });
-        
+
         const savedFoodItem = await foodItem.save();
-        
+
         console.log('✅ New food item created:', savedFoodItem.name);
         res.status(201).json(savedFoodItem);
-        
+
     } catch (error) {
         console.error('Error creating food item:', error);
-        
+
         if (error.name === 'ValidationError') {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 error: 'Validation error',
-                details: error.errors 
+                details: error.errors
             });
         }
-        
-        res.status(500).json({ 
+
+        res.status(500).json({
             error: 'Failed to create food item',
-            message: error.message 
+            message: error.message
         });
     }
 });
@@ -105,51 +120,66 @@ app.post('/api/food-items', async (req, res) => {
 // Update food item
 app.put('/api/food-items/:id', async (req, res) => {
     try {
-        const { name, location, contact, description } = req.body;
-        
-        // Validation
-        if (!name || !location || !contact) {
-            return res.status(400).json({ 
-                error: 'Missing required fields: name, location, and contact are required' 
+        const { name, location, contact, description, latitude, longitude } = req.body;
+
+        // Validation - handle both formats
+        let coordinates;
+        if (location && location.coordinates && Array.isArray(location.coordinates)) {
+            coordinates = location.coordinates;
+        } else if (latitude !== undefined && longitude !== undefined) {
+            coordinates = [longitude, latitude]; // GeoJSON format: [lng, lat]
+        } else {
+            return res.status(400).json({
+                error: 'Missing coordinates: provide either location.coordinates or latitude/longitude'
             });
         }
-        
+
+        if (!name || !contact || coordinates.length !== 2) {
+            return res.status(400).json({
+                error: 'Missing required fields: name, contact, and valid coordinates are required'
+            });
+        }
+
         const updatedFoodItem = await FoodItem.findByIdAndUpdate(
             req.params.id,
             {
                 name: name.trim(),
-                location: location.trim(),
+                location: {
+                    type: 'Point',
+                    coordinates: coordinates
+                },
+                address: location || '',
                 contact: contact.trim(),
                 description: description ? description.trim() : '',
                 updatedAt: Date.now()
             },
             { new: true, runValidators: true }
         );
-        
+
         if (!updatedFoodItem) {
             return res.status(404).json({ error: 'Food item not found' });
         }
-        
+
         console.log('✅ Food item updated:', updatedFoodItem.name);
         res.json(updatedFoodItem);
-        
+
     } catch (error) {
         console.error('Error updating food item:', error);
-        
+
         if (error.name === 'CastError') {
             return res.status(400).json({ error: 'Invalid food item ID' });
         }
-        
+
         if (error.name === 'ValidationError') {
-            return res.status(400).json({ 
+            return res.status(400).json({
                 error: 'Validation error',
-                details: error.errors 
+                details: error.errors
             });
         }
-        
-        res.status(500).json({ 
+
+        res.status(500).json({
             error: 'Failed to update food item',
-            message: error.message 
+            message: error.message
         });
     }
 });
