@@ -87,22 +87,199 @@
             <div class="hero">
                 <h1>Food Delivery Service</h1>
                 <p>Request delivery or help others transport food</p>
+                
+                <!-- Delivery Tab Navigation -->
+                <div class="delivery-tabs">
+                    <button class="tab-btn active" onclick="showDeliveryTab('request')">📝 Request Delivery</button>
+                    <button class="tab-btn" onclick="showDeliveryTab('help')">🤝 Help Deliver</button>
+                </div>
             </div>
 
-            <div class="delivery-section">
-                <div class="delivery-placeholder">
-                    <h2>🚚 Delivery Service</h2>
-                    <p>This feature will allow you to:</p>
-                    <ul style="text-align: left; max-width: 400px; margin: 1rem auto;">
-                        <li>Request food delivery from nearby sharers</li>
-                        <li>Offer to help transport food to those in need</li>
-                        <li>Track delivery status in real-time</li>
-                        <li>Rate and review delivery helpers</li>
-                    </ul>
-                    <div class="coming-soon">Coming Soon!</div>
+            <!-- Request Delivery Tab -->
+            <div id="requestDeliveryTab" class="delivery-tab active">
+                <div class="delivery-intro">
+                    <h3>Request Food Delivery</h3>
+                    <p>Need help getting food delivered to you? Submit a delivery request and community helpers will assist you.</p>
+                </div>
+
+                <!-- Available Food for Delivery -->
+                <div class="available-food-section">
+                    <h4>Available Food Items</h4>
+                    <div id="deliveryFoodGrid" class="food-grid">
+                        <!-- Food items available for delivery will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help Deliver Tab -->
+            <div id="helpDeliverTab" class="delivery-tab">
+                <div class="delivery-intro">
+                    <h3>Help Deliver Food</h3>
+                    <p>Help your community by delivering food to those in need. View delivery requests and volunteer to help.</p>
+                </div>
+
+                <!-- Helper Controls -->
+                <div class="helper-controls">
+                    <div class="helper-location">
+                        <span id="helperLocationStatus">📍 Location not detected</span>
+                        <button id="getHelperLocationBtn" class="location-btn" onclick="getHelperLocation()">
+                            Get My Location
+                        </button>
+                        <div id="helperCoords" style="display: none; margin-left: 1rem;">
+                            <small>Your coordinates: <span id="helperCoordsDisplay"></span></small>
+                        </div>
+                    </div>
+                    
+                    <div class="helper-filters">
+                        <label for="helperRadius">Search radius:</label>
+                        <select id="helperRadius" onchange="filterDeliveryRequests()">
+                            <option value="5">5 km</option>
+                            <option value="10" selected>10 km</option>
+                            <option value="20">20 km</option>
+                            <option value="50">50 km</option>
+                            <option value="100">100 km</option>
+                            <option value="all">Show all</option>
+                        </select>
+                        
+                        <label for="deliveryStatus">Status:</label>
+                        <select id="deliveryStatus" onchange="filterDeliveryRequests()">
+                            <option value="pending">Pending</option>
+                            <option value="accepted">Accepted</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="all">All Active</option>
+                        </select>
+                        
+                        <span id="deliveryResultCount" class="result-count"></span>
+                    </div>
+                </div>
+
+                <!-- Delivery Requests Grid -->
+                <div id="deliveryRequestsGrid" class="delivery-requests-grid">
+                    <!-- Delivery requests will be loaded here -->
                 </div>
             </div>
         </section>
+
+        <!-- Modal for Request Delivery Form -->
+        <div id="requestDeliveryModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeRequestDeliveryModal()">&times;</span>
+                <h2>Request Delivery</h2>
+                <div id="selectedFoodInfo" class="selected-food-info">
+                    <!-- Selected food info will be displayed here -->
+                </div>
+                
+                <form onsubmit="submitDeliveryRequest(event)">
+                    <input type="hidden" id="selectedFoodId">
+                    
+                    <div class="form-section">
+                        <h4>Pickup Information</h4>
+                        <div class="form-group">
+                            <label for="pickupAddress">Pickup Address *</label>
+                            <input type="text" id="pickupAddress" required readonly>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pickupLatitude">Pickup Latitude *</label>
+                                <input type="number" id="pickupLatitude" step="any" required readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="pickupLongitude">Pickup Longitude *</label>
+                                <input type="number" id="pickupLongitude" step="any" required readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>Delivery Information</h4>
+                        <div class="form-group">
+                            <label for="deliveryAddress">Delivery Address *</label>
+                            <input type="text" id="deliveryAddress" required 
+                                   placeholder="Your address where food should be delivered">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="deliveryLatitude">Delivery Latitude *</label>
+                                <input type="number" id="deliveryLatitude" step="any" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="deliveryLongitude">Delivery Longitude *</label>
+                                <input type="number" id="deliveryLongitude" step="any" required>
+                                <button type="button" class="location-btn" onclick="useMyLocationForDelivery()" 
+                                        style="margin-top: 0.5rem;">
+                                    Use My Location
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h4>Your Information</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="requesterName">Your Name *</label>
+                                <input type="text" id="requesterName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="requesterContact">Your Contact *</label>
+                                <input type="text" id="requesterContact" required 
+                                       placeholder="Phone, email, or messaging app">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="preferredDeliveryTime">Preferred Delivery Time</label>
+                            <input type="text" id="preferredDeliveryTime" 
+                                   placeholder="e.g., After 6 PM, Weekend, ASAP">
+                        </div>
+                        <div class="form-group">
+                            <label for="deliveryNotes">Special Instructions</label>
+                            <textarea id="deliveryNotes"
+                                placeholder="Any special instructions for the delivery helper..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-buttons">
+                        <button type="submit" class="cta-button">Request Delivery</button>
+                        <button type="button" class="btn-secondary" onclick="closeRequestDeliveryModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal for Helper Contact Info -->
+        <div id="helperContactModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeHelperContactModal()">&times;</span>
+                <h2>Accept Delivery Request</h2>
+                <div id="deliveryRequestInfo" class="delivery-request-info">
+                    <!-- Delivery request info will be displayed here -->
+                </div>
+                
+                <form onsubmit="acceptDeliveryRequest(event)">
+                    <input type="hidden" id="selectedRequestId">
+                    
+                    <div class="form-section">
+                        <h4>Your Information</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="helperName">Your Name *</label>
+                                <input type="text" id="helperName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="helperContact">Your Contact *</label>
+                                <input type="text" id="helperContact" required 
+                                       placeholder="Phone, email, or messaging app">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-buttons">
+                        <button type="submit" class="cta-button">Accept & Help Deliver</button>
+                        <button type="button" class="btn-secondary" onclick="closeHelperContactModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
         <!-- Modal for Add food form -->
         <div id="addFoodModal" class="modal">

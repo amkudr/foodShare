@@ -372,3 +372,459 @@
           padding: 1rem;
       }
   }
+
+  /* Delivery System Styles */
+
+/* Delivery Tabs */
+.delivery-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    justify-content: center;
+}
+
+.tab-btn {
+    background: #f8f9fa;
+    color: #666;
+    border: 2px solid #e9ecef;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.tab-btn:hover {
+    background: #e9ecef;
+    color: #333;
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: #667eea;
+}
+
+/* Delivery Tab Content */
+.delivery-tab {
+    display: none;
+    margin-top: 2rem;
+}
+
+.delivery-tab.active {
+    display: block;
+}
+
+.delivery-intro {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.delivery-intro h3 {
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.delivery-intro p {
+    color: #666;
+    font-size: 1.1rem;
+}
+
+/* Available Food Section */
+.available-food-section h4 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.delivery-food-item {
+    border-left: 4px solid #667eea;
+}
+
+.food-contact {
+    background: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 5px;
+    margin: 1rem 0;
+    font-size: 0.95rem;
+}
+
+/* Helper Controls */
+.helper-controls {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.helper-location {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.helper-filters {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e9ecef;
+    flex-wrap: wrap;
+}
+
+.helper-filters label {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.95rem;
+}
+
+.helper-filters select {
+    padding: 0.5rem 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 5px;
+    background: white;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.helper-filters select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+/* Delivery Requests Grid */
+.delivery-requests-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+/* Delivery Request Item */
+.delivery-request-item {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-left: 4px solid #28a745;
+    transition: transform 0.3s;
+}
+
+.delivery-request-item:hover {
+    transform: translateY(-2px);
+}
+
+.request-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.request-header h3 {
+    color: #333;
+    margin: 0;
+    flex: 1;
+}
+
+/* Status Badges */
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.status-accepted {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #b6e7f0;
+}
+
+.status-in-progress {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-completed {
+    background: #e2e3e5;
+    color: #383d41;
+    border: 1px solid #d6d8db;
+}
+
+.status-cancelled {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Request Meta Information */
+.request-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.distance-info {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.delivery-distance {
+    background: #28a745;
+    color: white;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+/* Request Details */
+.request-details {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.food-details,
+.location-details,
+.requester-details,
+.helper-details {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 3px solid #667eea;
+}
+
+.helper-details {
+    border-left-color: #28a745;
+}
+
+.request-details p {
+    margin: 0.5rem 0;
+    font-size: 0.95rem;
+}
+
+.request-details strong {
+    color: #333;
+    font-weight: 600;
+}
+
+/* Request Actions */
+.request-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+/* Modal Enhancements for Delivery */
+.modal-content {
+    max-width: 600px;
+}
+
+.selected-food-card,
+.request-summary {
+    background: #f8f9fa;
+    padding: 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #667eea;
+}
+
+.selected-food-card h4,
+.request-summary h4 {
+    color: #333;
+    margin-bottom: 0.75rem;
+}
+
+.selected-food-card p,
+.request-summary p {
+    margin: 0.5rem 0;
+    font-size: 0.95rem;
+}
+
+/* Form Enhancements */
+.form-section {
+    margin-bottom: 2rem;
+}
+
+.form-section h4 {
+    color: #333;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.delivery-request-info {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #28a745;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .delivery-tabs {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .tab-btn {
+        padding: 1rem;
+        border-radius: 8px;
+    }
+    
+    .helper-location,
+    .helper-filters {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .request-header {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .request-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .request-actions {
+        justify-content: stretch;
+    }
+    
+    .request-actions button {
+        flex: 1;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .delivery-intro {
+        padding: 1.5rem;
+    }
+    
+    .helper-controls {
+        padding: 1rem;
+    }
+}
+
+/* Animation for new delivery requests */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.delivery-request-item {
+    animation: slideInUp 0.3s ease-out;
+}
+
+/* Loading states */
+.delivery-requests-grid.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.helper-controls.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Empty state for delivery requests */
+.delivery-requests-grid .no-items {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem 2rem;
+    background: white;
+    border-radius: 10px;
+    color: #666;
+}
+
+.delivery-requests-grid .no-items::before {
+    content: "🚚";
+    display: block;
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* Success states */
+.delivery-request-item.accepted {
+    border-left-color: #28a745;
+}
+
+.delivery-request-item.completed {
+    border-left-color: #6c757d;
+    opacity: 0.8;
+}
+
+/* Hover effects */
+.delivery-food-item:hover,
+.delivery-request-item:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+/* Button variations for delivery system */
+.btn-accept {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.btn-accept:hover {
+    background: #218838;
+}
+
+.btn-status {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 5px;
+    cursor: not-allowed;
+    font-weight: 500;
+}
