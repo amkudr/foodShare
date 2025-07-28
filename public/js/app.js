@@ -38,14 +38,29 @@ function displayFoodItems(foodItems) {
         return;
     }
     
+    // Sort by distance if user location is available
+    if (userLocation) {
+        foodItems.sort((a, b) => {
+            const distA = calculateDistance(
+                userLocation.latitude, userLocation.longitude,
+                a.location.coordinates[1], a.location.coordinates[0]
+            );
+            const distB = calculateDistance(
+                userLocation.latitude, userLocation.longitude,
+                b.location.coordinates[1], b.location.coordinates[0]
+            );
+            return distA - distB;
+        });
+    }
+    
     foodItems.forEach(food => {
-        const foodElement = createFoodElement(food);
+        const foodElement = createFoodElement(food, true); // true = show delivery button
         foodGrid.appendChild(foodElement);
     });
 }
 
 // Create HTML element for a food item
-function createFoodElement(food) {
+function createFoodElement(food, showDeliveryBtn = true) {
     const foodElement = document.createElement('div');
     foodElement.className = 'food-item';
     foodElement.setAttribute('data-id', food._id);
@@ -55,18 +70,34 @@ function createFoodElement(food) {
     // Use address if available, otherwise show coordinates
     const locationText = food.address || `${food.location.coordinates[1]}, ${food.location.coordinates[0]}`;
     
+    // Calculate distance if user location is available
+    let distanceHtml = '';
+    if (userLocation && food.location && food.location.coordinates) {
+        const distance = calculateDistance(
+            userLocation.latitude, userLocation.longitude,
+            food.location.coordinates[1], food.location.coordinates[0]
+        );
+        distanceHtml = `<span class="food-distance">${distance.toFixed(1)} km away</span> • `;
+    }
+    
+    // Show delivery button only on find page
+    const deliveryBtnHtml = showDeliveryBtn ? 
+        '<button class="delivery-btn" onclick="requestDelivery(\'' + food._id + '\')">🚚 Request Delivery</button>' : '';
+    
     foodElement.innerHTML = `
         <h3>${escapeHtml(food.name)}</h3>
-        <div class="food-meta">📍 ${escapeHtml(locationText)} • ${timeAgo}</div>
+        <div class="food-meta">📍 ${escapeHtml(locationText)} • ${distanceHtml}${timeAgo}</div>
         <div class="food-description">${escapeHtml(food.description)}</div>
         <div class="food-actions">
             <button class="contact-btn" onclick="contactOwner('${escapeHtml(food.contact)}')">Contact</button>
+            ${deliveryBtnHtml}
             <button class="delete-btn" onclick="deleteFood('${food._id}')">Delete</button>
         </div>
     `;
     
     return foodElement;
 }
+
 
 // Toggle add food form visibility
 function toggleAddForm() {
@@ -251,4 +282,160 @@ function escapeHtml(unsafe) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+// Global variables for user location
+let userLocation = null;
+
+// Page navigation function
+function showPage(pageId) {
+    // Hide all pages
+    document.querySelectorAll('.page-section').forEach(page => {
+        page.classList.remove('active');
+    });
+    
+    // Remove active class from nav links
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    
+    // Show selected page
+    document.getElementById(pageId + 'Page').classList.add('active');
+    
+    // Add active class to clicked nav link
+    event.target.classList.add('active');
+    
+    // Load appropriate content
+    if (pageId === 'find') {
+        loadFoodItems();
+    } else if (pageId === 'share') {
+        loadSharedFoodItems();
+    }
+}
+
+// Get user's current location
+function getUserLocation() {
+    const statusEl = document.getElementById('locationStatus');
+    const btnEl = document.getElementById('getLocationBtn');
+    const coordsEl = document.getElementById('userCoords');
+    
+    if (!navigator.geolocation) {
+        statusEl.textContent = '❌ Geolocation is not supported';
+        return;
+    }
+    
+    statusEl.textContent = '📍 Getting location...';
+    btnEl.disabled = true;
+    btnEl.textContent = 'Getting Location...';
+    
+    navigator.geolocation.getCurrentPosition(
+        function(position) {
+            userLocation = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+            };
+            
+            statusEl.textContent = '✅ Location detected';
+            btnEl.textContent = 'Update Location';
+            btnEl.disabled = false;
+            
+            // Show coordinates
+            document.getElementById('coordsDisplay').textContent = 
+                `${userLocation.latitude.toFixed(6)}, ${userLocation.longitude.toFixed(6)}`;
+            coordsEl.style.display = 'block';
+            
+            // Reload food items to show distances
+            loadFoodItems();
+            
+            console.log('User location obtained:', userLocation);
+        },
+        function(error) {
+            console.error('Error getting location:', error);
+            statusEl.textContent = '❌ Location access denied';
+            btnEl.disabled = false;
+            btnEl.textContent = 'Get My Location';
+            
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    statusEl.textContent = '❌ Location access denied';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    statusEl.textContent = '❌ Location unavailable';
+                    break;
+                case error.TIMEOUT:
+                    statusEl.textContent = '❌ Location timeout';
+                    break;
+            }
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 300000 // 5 minutes
+        }
+    );
+}
+
+// Use current location for the add food form
+function useMyLocationForForm() {
+    if (userLocation) {
+        document.getElementById('latitude').value = userLocation.latitude;
+        document.getElementById('longitude').value = userLocation.longitude;
+        showAlert('Location filled in successfully! 📍', 'success');
+    } else {
+        showAlert('Please allow location access first', 'error');
+        getUserLocation();
+    }
+}
+
+// Load shared food items for share page
+async function loadSharedFoodItems() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/food-items`);
+        
+        if (!response.ok) {
+            throw new Error('Failed to load shared food items');
+        }
+        
+        const foodItems = await response.json();
+        displaySharedFoodItems(foodItems);
+        
+    } catch (error) {
+        console.error('Error loading shared food items:', error);
+        showAlert('Failed to load shared food items. Please try again later.', 'error');
+    }
+}
+
+// Display shared food items in the share page
+function displaySharedFoodItems(foodItems) {
+    const foodGrid = document.getElementById('sharedFoodGrid');
+    
+    if (!foodGrid) return; // Guard clause if element doesn't exist
+    
+    foodGrid.innerHTML = '';
+    
+    if (foodItems.length === 0) {
+        foodGrid.innerHTML = '<p class="no-items">No shared food items yet. Share some food to see it here!</p>';
+        return;
+    }
+    
+    // Show latest 10 items
+    const recentItems = foodItems.slice(0, 10);
+    
+    recentItems.forEach(food => {
+        const foodElement = createFoodElement(food);
+        foodGrid.appendChild(foodElement);
+    });
+}
+
+// Calculate distance between two coordinates (Haversine formula)
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Distance in km
 }

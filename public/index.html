@@ -14,20 +14,78 @@
         <nav>
             <div class="logo">🍽️ FoodShare</div>
             <div class="nav-links">
-                <a href="#home">Home</a>
-                <a href="#about">About</a>
-                <a href="#contact">Contact</a>
+                <a href="#" onclick="showPage('find')" class="nav-link active">🔍 Find Food</a>
+                <a href="#" onclick="showPage('share')" class="nav-link">📤 Share Food</a>
+                <a href="#" onclick="showPage('delivery')" class="nav-link">🚚 Delivery</a>
             </div>
         </nav>
     </header>
 
     <!-- Main content -->
     <main>
-        <!-- Hero section -->
-        <section class="hero">
-            <h1>Share Food, Reduce Waste</h1>
-            <p>Connect with your community to share surplus food and help reduce food waste</p>
-            <button class="cta-button" onclick="toggleAddForm()">Share Food</button>
+        <!-- Find Food Page -->
+        <section id="findPage" class="page-section active">
+            <div class="hero">
+                <h1>Find Food Near You</h1>
+                <p>Discover available food in your area and help reduce waste</p>
+            </div>
+
+            <!-- Location Controls -->
+            <div class="location-controls">
+                <div class="location-status">
+                    <span id="locationStatus">📍 Location not detected</span>
+                    <button id="getLocationBtn" class="location-btn" onclick="getUserLocation()">
+                        Get My Location
+                    </button>
+                </div>
+                <div id="userCoords" style="display: none;">
+                    <small>Your coordinates: <span id="coordsDisplay"></span></small>
+                </div>
+            </div>
+
+            <!-- Food items grid -->
+            <div class="food-grid" id="foodGrid">
+                <!-- Food items will be loaded dynamically -->
+            </div>
+
+            <!-- Loading indicator -->
+            <div id="loading" class="loading">Loading food items...</div>
+        </section>
+
+        <!-- Share Food Page -->
+        <section id="sharePage" class="page-section">
+            <div class="hero">
+                <h1>Share Your Food</h1>
+                <p>Have surplus food? Share it with your community and help reduce waste</p>
+                <button class="cta-button" onclick="toggleAddForm()">Add Food Item</button>
+            </div>
+
+            <!-- Recently shared items -->
+            <div class="food-grid" id="sharedFoodGrid">
+                <!-- Shared food items will be loaded here -->
+            </div>
+        </section>
+
+        <!-- Delivery Page -->
+        <section id="deliveryPage" class="page-section">
+            <div class="hero">
+                <h1>Food Delivery Service</h1>
+                <p>Request delivery or help others transport food</p>
+            </div>
+
+            <div class="delivery-section">
+                <div class="delivery-placeholder">
+                    <h2>🚚 Delivery Service</h2>
+                    <p>This feature will allow you to:</p>
+                    <ul style="text-align: left; max-width: 400px; margin: 1rem auto;">
+                        <li>Request food delivery from nearby sharers</li>
+                        <li>Offer to help transport food to those in need</li>
+                        <li>Track delivery status in real-time</li>
+                        <li>Rate and review delivery helpers</li>
+                    </ul>
+                    <div class="coming-soon">Coming Soon!</div>
+                </div>
+            </div>
         </section>
 
         <!-- Modal for Add food form -->
@@ -37,29 +95,36 @@
                 <h2>Share Your Food</h2>
                 <form onsubmit="addFood(event)">
                     <div class="form-group">
-                        <label for="foodName">Food Name</label>
+                        <label for="foodName">Food Name *</label>
                         <input type="text" id="foodName" required>
                     </div>
                     <div class="form-group">
-                        <label for="location">Location</label>
-                        <input type="text" id="location" required>
+                        <label for="location">Address/Location Description *</label>
+                        <input type="text" id="location" required 
+                               placeholder="e.g. 123 Main St, Downtown, Near Central Park">
                     </div>
                     <div class="form-group">
-                        <label for="latitude">Latitude</label>
+                        <label for="latitude">Latitude *</label>
                         <input type="number" id="latitude" step="any" required>
+                        <small>Click "Use My Location" to auto-fill coordinates</small>
                     </div>
                     <div class="form-group">
-                        <label for="longitude">Longitude</label>
+                        <label for="longitude">Longitude *</label>
                         <input type="number" id="longitude" step="any" required>
+                        <button type="button" class="location-btn" onclick="useMyLocationForForm()" 
+                                style="margin-top: 0.5rem;">
+                            Use My Location
+                        </button>
                     </div>
                     <div class="form-group">
-                        <label for="contact">Contact Info</label>
-                        <input type="text" id="contact" required>
+                        <label for="contact">Contact Info *</label>
+                        <input type="text" id="contact" required 
+                               placeholder="Phone, email, or messaging app">
                     </div>
                     <div class="form-group">
                         <label for="description">Description</label>
                         <textarea id="description"
-                            placeholder="Describe the food, quantity, pickup instructions..."></textarea>
+                            placeholder="Describe the food, quantity, pickup instructions, expiry date..."></textarea>
                     </div>
                     <div class="form-buttons">
                         <button type="submit" class="cta-button">Share Food</button>
@@ -68,15 +133,6 @@
                 </form>
             </div>
         </div>
-
-
-        <!-- Food items grid -->
-        <section class="food-grid" id="foodGrid">
-            <!-- Food items will be loaded dynamically -->
-        </section>
-
-        <!-- Loading indicator -->
-        <div id="loading" class="loading">Loading food items...</div>
     </main>
 
     <!-- Footer -->
