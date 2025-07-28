@@ -37,9 +37,25 @@
                     <button id="getLocationBtn" class="location-btn" onclick="getUserLocation()">
                         Get My Location
                     </button>
+                    <div id="userCoords" style="display: none; margin-left: 1rem;">
+                        <small>Your coordinates: <span id="coordsDisplay"></span></small>
+                    </div>
                 </div>
-                <div id="userCoords" style="display: none;">
-                    <small>Your coordinates: <span id="coordsDisplay"></span></small>
+                
+                <!-- Search Radius Controls -->
+                <div class="search-controls">
+                    <label for="searchRadius">Search radius:</label>
+                    <select id="searchRadius" onchange="filterByRadius()">
+                        <option value="1">1 km</option>
+                        <option value="2">2 km</option>
+                        <option value="5" selected>5 km</option>
+                        <option value="10">10 km</option>
+                        <option value="20">20 km</option>
+                        <option value="50">50 km</option>
+                        <option value="100">100 km</option>
+                        <option value="all">Show all</option>
+                    </select>
+                    <span id="resultCount" class="result-count"></span>
                 </div>
             </div>
 
