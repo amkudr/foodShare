@@ -41,7 +41,7 @@
                         <small>Your coordinates: <span id="coordsDisplay"></span></small>
                     </div>
                 </div>
-                
+
                 <!-- Search Radius Controls -->
                 <div class="search-controls">
                     <label for="searchRadius">Search radius:</label>
@@ -87,7 +87,7 @@
             <div class="hero">
                 <h1>Food Delivery Service</h1>
                 <p>Request delivery or help others transport food</p>
-                
+
                 <!-- Delivery Tab Navigation -->
                 <div class="delivery-tabs">
                     <button class="tab-btn active" onclick="showDeliveryTab('request')">📝 Request Delivery</button>
@@ -99,7 +99,8 @@
             <div id="requestDeliveryTab" class="delivery-tab active">
                 <div class="delivery-intro">
                     <h3>Request Food Delivery</h3>
-                    <p>Need help getting food delivered to you? Submit a delivery request and community helpers will assist you.</p>
+                    <p>Need help getting food delivered to you? Submit a delivery request and community helpers will
+                        assist you.</p>
                 </div>
 
                 <!-- Available Food for Delivery -->
@@ -115,7 +116,8 @@
             <div id="helpDeliverTab" class="delivery-tab">
                 <div class="delivery-intro">
                     <h3>Help Deliver Food</h3>
-                    <p>Help your community by delivering food to those in need. View delivery requests and volunteer to help.</p>
+                    <p>Help your community by delivering food to those in need. View delivery requests and volunteer to
+                        help.</p>
                 </div>
 
                 <!-- Helper Controls -->
@@ -129,7 +131,7 @@
                             <small>Your coordinates: <span id="helperCoordsDisplay"></span></small>
                         </div>
                     </div>
-                    
+
                     <div class="helper-filters">
                         <label for="helperRadius">Search radius:</label>
                         <select id="helperRadius" onchange="filterDeliveryRequests()">
@@ -140,7 +142,7 @@
                             <option value="100">100 km</option>
                             <option value="all">Show all</option>
                         </select>
-                        
+
                         <label for="deliveryStatus">Status:</label>
                         <select id="deliveryStatus" onchange="filterDeliveryRequests()">
                             <option value="pending">Pending</option>
@@ -148,7 +150,7 @@
                             <option value="in_progress">In Progress</option>
                             <option value="all">All Active</option>
                         </select>
-                        
+
                         <span id="deliveryResultCount" class="result-count"></span>
                     </div>
                 </div>
@@ -168,10 +170,10 @@
                 <div id="selectedFoodInfo" class="selected-food-info">
                     <!-- Selected food info will be displayed here -->
                 </div>
-                
+
                 <form onsubmit="submitDeliveryRequest(event)">
                     <input type="hidden" id="selectedFoodId">
-                    
+
                     <div class="form-section">
                         <h4>Pickup Information</h4>
                         <div class="form-group">
@@ -194,8 +196,8 @@
                         <h4>Delivery Information</h4>
                         <div class="form-group">
                             <label for="deliveryAddress">Delivery Address *</label>
-                            <input type="text" id="deliveryAddress" required 
-                                   placeholder="Your address where food should be delivered">
+                            <input type="text" id="deliveryAddress" required
+                                placeholder="Your address where food should be delivered">
                         </div>
                         <div class="form-row">
                             <div class="form-group">
@@ -205,8 +207,8 @@
                             <div class="form-group">
                                 <label for="deliveryLongitude">Delivery Longitude *</label>
                                 <input type="number" id="deliveryLongitude" step="any" required>
-                                <button type="button" class="location-btn" onclick="useMyLocationForDelivery()" 
-                                        style="margin-top: 0.5rem;">
+                                <button type="button" class="location-btn" onclick="useMyLocationForDelivery()"
+                                    style="margin-top: 0.5rem;">
                                     Use My Location
                                 </button>
                             </div>
@@ -222,14 +224,13 @@
                             </div>
                             <div class="form-group">
                                 <label for="requesterContact">Your Contact *</label>
-                                <input type="text" id="requesterContact" required 
-                                       placeholder="Phone, email, or messaging app">
+                                <input type="text" id="requesterContact" required
+                                    placeholder="Phone, email, or messaging app">
                             </div>
                         </div>
                         <div class="form-group">
                             <label for="preferredDeliveryTime">Preferred Delivery Time</label>
-                            <input type="text" id="preferredDeliveryTime" 
-                                   placeholder="e.g., After 6 PM, Weekend, ASAP">
+                            <input type="text" id="preferredDeliveryTime" placeholder="e.g., After 6 PM, Weekend, ASAP">
                         </div>
                         <div class="form-group">
                             <label for="deliveryNotes">Special Instructions</label>
@@ -237,10 +238,11 @@
                                 placeholder="Any special instructions for the delivery helper..."></textarea>
                         </div>
                     </div>
-                    
+
                     <div class="form-buttons">
                         <button type="submit" class="cta-button">Request Delivery</button>
-                        <button type="button" class="btn-secondary" onclick="closeRequestDeliveryModal()">Cancel</button>
+                        <button type="button" class="btn-secondary"
+                            onclick="closeRequestDeliveryModal()">Cancel</button>
                     </div>
                 </form>
             </div>
@@ -254,10 +256,10 @@
                 <div id="deliveryRequestInfo" class="delivery-request-info">
                     <!-- Delivery request info will be displayed here -->
                 </div>
-                
+
                 <form onsubmit="acceptDeliveryRequest(event)">
                     <input type="hidden" id="selectedRequestId">
-                    
+
                     <div class="form-section">
                         <h4>Your Information</h4>
                         <div class="form-row">
@@ -267,12 +269,12 @@
                             </div>
                             <div class="form-group">
                                 <label for="helperContact">Your Contact *</label>
-                                <input type="text" id="helperContact" required 
-                                       placeholder="Phone, email, or messaging app">
+                                <input type="text" id="helperContact" required
+                                    placeholder="Phone, email, or messaging app">
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="form-buttons">
                         <button type="submit" class="cta-button">Accept & Help Deliver</button>
                         <button type="button" class="btn-secondary" onclick="closeHelperContactModal()">Cancel</button>
@@ -293,8 +295,8 @@
                     </div>
                     <div class="form-group">
                         <label for="location">Address/Location Description *</label>
-                        <input type="text" id="location" required 
-                               placeholder="e.g. 123 Main St, Downtown, Near Central Park">
+                        <input type="text" id="location" required
+                            placeholder="e.g. 123 Main St, Downtown, Near Central Park">
                     </div>
                     <div class="form-group">
                         <label for="latitude">Latitude *</label>
@@ -304,15 +306,14 @@
                     <div class="form-group">
                         <label for="longitude">Longitude *</label>
                         <input type="number" id="longitude" step="any" required>
-                        <button type="button" class="location-btn" onclick="useMyLocationForForm()" 
-                                style="margin-top: 0.5rem;">
+                        <button type="button" class="location-btn" onclick="useMyLocationForForm()"
+                            style="margin-top: 0.5rem;">
                             Use My Location
                         </button>
                     </div>
                     <div class="form-group">
                         <label for="contact">Contact Info *</label>
-                        <input type="text" id="contact" required 
-                               placeholder="Phone, email, or messaging app">
+                        <input type="text" id="contact" required placeholder="Phone, email, or messaging app">
                     </div>
                     <div class="form-group">
                         <label for="description">Description</label>
@@ -333,7 +334,11 @@
         <p>&copy; 2025 FoodShare. Together we reduce food waste. 🌱</p>
     </footer>
 
-    <script src="js/app.js"></script>
+    <script src="./js/food_management.js"></script>
+    <script src="./js/location_utils.js"></script>
+    <script src="./js/delivery_system.js"></script>
+    <script src="./js/app.js"></script>
+
 </body>
 
 </html>
