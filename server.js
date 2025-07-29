@@ -1,5 +1,4 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
@@ -12,21 +11,108 @@ const DeliveryRequest = require('./model/DeliveryRequest');
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Increase limit for base64 images
 app.use(express.static(path.join(__dirname, 'public')));
 
 // MongoDB connection
 connectMongoDB();
 
-// Routes
+// Helper function to validate base64 image
+function isValidBase64Image(base64String) {
+    if (!base64String) return true; // Optional field
+    
+    // Check if it's a valid base64 image format
+    const base64Regex = /^data:image\/(jpeg|jpg|png|gif|webp);base64,/;
+    return base64Regex.test(base64String);
+}
+
+// Helper function to extract photo metadata
+function extractPhotoMetadata(base64String) {
+    if (!base64String) return null;
+    
+    // Extract MIME type
+    const mimeMatch = base64String.match(/^data:(image\/[^;]+);base64,/);
+    const mimeType = mimeMatch ? mimeMatch[1] : null;
+    
+    // Calculate approximate file size
+    const base64Data = base64String.split(',')[1];
+    const sizeInBytes = Math.round((base64Data.length * 3) / 4);
+    
+    return {
+        mimeType,
+        size: sizeInBytes,
+        originalName: `food-photo-${Date.now()}.${mimeType ? mimeType.split('/')[1] : 'jpg'}`
+    };
+}
+
+// Helper function to validate photo size (max 1MB)
+function validatePhotoSize(base64String) {
+    if (!base64String) return true;
+    
+    const base64Data = base64String.split(',')[1];
+    const sizeInBytes = Math.round((base64Data.length * 3) / 4);
+    const maxSize = 1024 * 1024; // 1MB
+    
+    return sizeInBytes <= maxSize;
+}
+
+// FOOD ITEM ROUTES
 
 // Get all food items
 app.get('/api/food-items', async (req, res) => {
     try {
-        const foodItems = await FoodItem.find()
-            .sort({ createdAt: -1 }) // Sort by newest first
-            .limit(50); // Limit to 50 items
-        
+        const { lat, lng, radius } = req.query;
+        let query = {};
+
+        // If location and radius provided, find items within radius
+        if (lat && lng && radius) {
+            const latitude = parseFloat(lat);
+            const longitude = parseFloat(lng);
+            const radiusInMeters = parseFloat(radius) * 1000; // Convert km to meters
+
+            // Validate coordinates
+            if (isNaN(latitude) || isNaN(longitude) || isNaN(radiusInMeters)) {
+                return res.status(400).json({ error: 'Invalid location parameters' });
+            }
+
+            query = {
+                location: {
+                    $near: {
+                        $geometry: {
+                            type: 'Point',
+                            coordinates: [longitude, latitude]
+                        },
+                        $maxDistance: radiusInMeters
+                    }
+                }
+            };
+        }
+
+        const foodItems = await FoodItem.find(query)
+            .sort({ createdAt: -1 })
+            .limit(100); // Limit results for performance
+
+        // Log photo statistics
+        const photoStats = foodItems.reduce((stats, item) => {
+            if (item.photo) {
+                stats.withPhoto++;
+                if (item.photoMetadata && item.photoMetadata.size) {
+                    stats.totalPhotoSize += item.photoMetadata.size;
+                }
+            } else {
+                stats.withoutPhoto++;
+            }
+            return stats;
+        }, { withPhoto: 0, withoutPhoto: 0, totalPhotoSize: 0 });
+
+        console.log('Food items retrieved:', {
+            total: foodItems.length,
+            withPhoto: photoStats.withPhoto,
+            withoutPhoto: photoStats.withoutPhoto,
+            avgPhotoSize: photoStats.withPhoto > 0 ? 
+                `${Math.round(photoStats.totalPhotoSize / photoStats.withPhoto / 1024)}KB` : 'N/A'
+        });
+
         res.json(foodItems);
     } catch (error) {
         console.error('Error fetching food items:', error);
@@ -64,14 +150,18 @@ app.get('/api/food-items/:id', async (req, res) => {
 // Create new food item
 app.post('/api/food-items', async (req, res) => {
     try {
-        const { name, location, contact, description, latitude, longitude } = req.body;
+        const { name, location, contact, description, latitude, longitude, photo } = req.body;
 
         // Validation - handle both formats (coordinates array or separate lat/lng)
         let coordinates;
+        let address = '';
+        
         if (location && location.coordinates && Array.isArray(location.coordinates)) {
             coordinates = location.coordinates;
+            address = location.address || '';
         } else if (latitude !== undefined && longitude !== undefined) {
-            coordinates = [longitude, latitude]; // GeoJSON format: [lng, lat]
+            coordinates = [parseFloat(longitude), parseFloat(latitude)]; // GeoJSON format: [lng, lat]
+            address = location || '';
         } else {
             return res.status(400).json({
                 error: 'Missing coordinates: provide either location.coordinates or latitude/longitude'
@@ -84,6 +174,33 @@ app.post('/api/food-items', async (req, res) => {
             });
         }
 
+        // Validate coordinates
+        const [lng, lat] = coordinates;
+        if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+            return res.status(400).json({ 
+                error: 'Invalid coordinates. Latitude must be between -90 and 90, longitude between -180 and 180.' 
+            });
+        }
+
+        // Validate photo if provided
+        if (photo) {
+            if (!isValidBase64Image(photo)) {
+                return res.status(400).json({ 
+                    error: 'Invalid photo format. Must be a base64 encoded image (JPEG, PNG, GIF, or WebP).' 
+                });
+            }
+
+            // Check photo size (max 1MB)
+            if (!validatePhotoSize(photo)) {
+                return res.status(400).json({ 
+                    error: 'Photo size too large. Maximum size is 1MB.' 
+                });
+            }
+        }
+
+        // Extract photo metadata
+        const photoMetadata = photo ? extractPhotoMetadata(photo) : null;
+
         // Create new food item
         const foodItem = new FoodItem({
             name: name.trim(),
@@ -91,14 +208,22 @@ app.post('/api/food-items', async (req, res) => {
                 type: 'Point',
                 coordinates: coordinates
             },
-            address: location || '', // Use location string as address if provided
+            address: address,
             contact: contact.trim(),
-            description: description ? description.trim() : ''
+            description: description ? description.trim() : '',
+            photo: photo || null,
+            photoMetadata: photoMetadata
         });
 
         const savedFoodItem = await foodItem.save();
 
-        console.log('✅ New food item created:', savedFoodItem.name);
+        console.log('✅ New food item created:', {
+            id: savedFoodItem._id,
+            name: savedFoodItem.name,
+            hasPhoto: !!savedFoodItem.photo,
+            photoSize: photoMetadata ? `${Math.round(photoMetadata.size / 1024)}KB` : 'No photo'
+        });
+        
         res.status(201).json(savedFoodItem);
 
     } catch (error) {
@@ -111,6 +236,11 @@ app.post('/api/food-items', async (req, res) => {
             });
         }
 
+        // Handle duplicate key errors
+        if (error.code === 11000) {
+            return res.status(400).json({ error: 'Duplicate food item detected.' });
+        }
+
         res.status(500).json({
             error: 'Failed to create food item',
             message: error.message
@@ -121,39 +251,73 @@ app.post('/api/food-items', async (req, res) => {
 // Update food item
 app.put('/api/food-items/:id', async (req, res) => {
     try {
-        const { name, location, contact, description, latitude, longitude } = req.body;
+        const { name, location, contact, description, latitude, longitude, photo } = req.body;
+        const updateData = {};
 
-        // Validation - handle both formats
-        let coordinates;
-        if (location && location.coordinates && Array.isArray(location.coordinates)) {
-            coordinates = location.coordinates;
-        } else if (latitude !== undefined && longitude !== undefined) {
-            coordinates = [longitude, latitude]; // GeoJSON format: [lng, lat]
-        } else {
-            return res.status(400).json({
-                error: 'Missing coordinates: provide either location.coordinates or latitude/longitude'
-            });
+        // Only update provided fields
+        if (name) updateData.name = name.trim();
+        if (contact) updateData.contact = contact.trim();
+        if (description !== undefined) updateData.description = description.trim();
+
+        // Handle location updates
+        if (location || (latitude !== undefined && longitude !== undefined)) {
+            let coordinates;
+            let address = '';
+            
+            if (location && location.coordinates && Array.isArray(location.coordinates)) {
+                coordinates = location.coordinates;
+                address = location.address || '';
+            } else if (latitude !== undefined && longitude !== undefined) {
+                coordinates = [parseFloat(longitude), parseFloat(latitude)];
+                address = location || '';
+            }
+            
+            if (coordinates && coordinates.length === 2) {
+                const [lng, lat] = coordinates;
+                if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                    return res.status(400).json({ 
+                        error: 'Invalid coordinates.' 
+                    });
+                }
+                
+                updateData.location = {
+                    type: 'Point',
+                    coordinates: coordinates
+                };
+                updateData.address = address;
+            }
         }
 
-        if (!name || !contact || coordinates.length !== 2) {
-            return res.status(400).json({
-                error: 'Missing required fields: name, contact, and valid coordinates are required'
-            });
+        // Handle photo update
+        if (photo !== undefined) {
+            if (photo === null || photo === '') {
+                // Remove photo
+                updateData.photo = null;
+                updateData.photoMetadata = null;
+            } else {
+                // Validate and update photo
+                if (!isValidBase64Image(photo)) {
+                    return res.status(400).json({ 
+                        error: 'Invalid photo format.' 
+                    });
+                }
+
+                if (!validatePhotoSize(photo)) {
+                    return res.status(400).json({ 
+                        error: 'Photo size too large. Maximum size is 1MB.' 
+                    });
+                }
+
+                updateData.photo = photo;
+                updateData.photoMetadata = extractPhotoMetadata(photo);
+            }
         }
+
+        updateData.updatedAt = Date.now();
 
         const updatedFoodItem = await FoodItem.findByIdAndUpdate(
             req.params.id,
-            {
-                name: name.trim(),
-                location: {
-                    type: 'Point',
-                    coordinates: coordinates
-                },
-                address: location || '',
-                contact: contact.trim(),
-                description: description ? description.trim() : '',
-                updatedAt: Date.now()
-            },
+            updateData,
             { new: true, runValidators: true }
         );
 
@@ -161,7 +325,12 @@ app.put('/api/food-items/:id', async (req, res) => {
             return res.status(404).json({ error: 'Food item not found' });
         }
 
-        console.log('✅ Food item updated:', updatedFoodItem.name);
+        console.log('✅ Food item updated:', {
+            id: req.params.id,
+            name: updatedFoodItem.name,
+            photoUpdated: photo !== undefined
+        });
+        
         res.json(updatedFoodItem);
 
     } catch (error) {
@@ -172,10 +341,8 @@ app.put('/api/food-items/:id', async (req, res) => {
         }
 
         if (error.name === 'ValidationError') {
-            return res.status(400).json({
-                error: 'Validation error',
-                details: error.errors
-            });
+            const errorMessages = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({ error: errorMessages.join(', ') });
         }
 
         res.status(500).json({
@@ -194,7 +361,12 @@ app.delete('/api/food-items/:id', async (req, res) => {
             return res.status(404).json({ error: 'Food item not found' });
         }
         
-        console.log('✅ Food item deleted:', deletedFoodItem.name);
+        console.log('✅ Food item deleted:', {
+            id: req.params.id,
+            name: deletedFoodItem.name,
+            hadPhoto: !!deletedFoodItem.photo
+        });
+        
         res.json({ message: 'Food item deleted successfully' });
         
     } catch (error) {
@@ -231,13 +403,21 @@ app.get('/api/delivery-requests', async (req, res) => {
         
         // If location parameters are provided, add geospatial query for pickup location
         if (lat && lng && maxDistance) {
+            const latitude = parseFloat(lat);
+            const longitude = parseFloat(lng);
+            const distance = parseFloat(maxDistance);
+            
+            if (isNaN(latitude) || isNaN(longitude) || isNaN(distance)) {
+                return res.status(400).json({ error: 'Invalid location parameters' });
+            }
+            
             query.pickupLocation = {
                 $near: {
                     $geometry: {
                         type: 'Point',
-                        coordinates: [parseFloat(lng), parseFloat(lat)]
+                        coordinates: [longitude, latitude]
                     },
-                    $maxDistance: parseFloat(maxDistance) * 1000 // Convert km to meters
+                    $maxDistance: distance * 1000 // Convert km to meters
                 }
             };
         }
@@ -334,12 +514,12 @@ app.post('/api/delivery-requests', async (req, res) => {
             foodItemId,
             pickupLocation: {
                 type: 'Point',
-                coordinates: [pickupLongitude, pickupLatitude]
+                coordinates: [parseFloat(pickupLongitude), parseFloat(pickupLatitude)]
             },
             pickupAddress: pickupAddress.trim(),
             deliveryLocation: {
                 type: 'Point',
-                coordinates: [deliveryLongitude, deliveryLatitude]
+                coordinates: [parseFloat(deliveryLongitude), parseFloat(deliveryLatitude)]
             },
             deliveryAddress: deliveryAddress.trim(),
             requesterName: requesterName.trim(),

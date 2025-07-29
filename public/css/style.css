@@ -828,3 +828,218 @@
     cursor: not-allowed;
     font-weight: 500;
 }
+
+/* Photo Upload Styles */
+.photo-preview {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.photo-preview img {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.remove-photo-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.remove-photo-btn:hover {
+    background-color: #c82333;
+}
+
+/* Food Item Photo Styles */
+.food-item {
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.food-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.food-photo {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+    background-color: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.food-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.food-item:hover .food-image {
+    transform: scale(1.05);
+}
+
+.food-content {
+    padding: 20px;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.food-content h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.food-meta {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    margin-bottom: 12px;
+}
+
+.food-description {
+    flex-grow: 1;
+    margin-bottom: 15px;
+    color: #34495e;
+    line-height: 1.5;
+}
+
+.food-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: auto;
+}
+
+/* Delivery Food Item Styles */
+.delivery-food-item {
+    border-left: 4px solid #3498db;
+}
+
+.delivery-food-item:hover {
+    border-left-color: #2980b9;
+}
+
+/* Selected Food Card in Modal */
+.selected-food-card {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.selected-food-photo {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.selected-food-image {
+    max-width: 150px;
+    max-height: 150px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.selected-food-card h4 {
+    margin: 0 0 10px 0;
+    color: #2c3e50;
+    font-size: 1.2rem;
+}
+
+.selected-food-card p {
+    margin: 8px 0;
+    color: #495057;
+}
+
+/* Responsive Design for Photos */
+@media (max-width: 768px) {
+    .food-photo {
+        height: 150px;
+    }
+    
+    .photo-preview {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .photo-preview img {
+        max-width: 150px;
+        max-height: 150px;
+    }
+    
+    .selected-food-image {
+        max-width: 120px;
+        max-height: 120px;
+    }
+}
+
+/* Loading state for image upload */
+.uploading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.uploading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #3498db;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* File input styling */
+input[type="file"] {
+    border: 2px dashed #bdc3c7;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: border-color 0.3s ease;
+}
+
+input[type="file"]:hover {
+    border-color: #3498db;
+    background-color: #e3f2fd;
+}
+
+input[type="file"]:focus {
+    outline: none;
+    border-color: #2980b9;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}

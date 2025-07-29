@@ -112,17 +112,26 @@ function createDeliveryFoodElement(food) {
     const timeAgo = typeof getTimeAgo === 'function' ? getTimeAgo(new Date(food.createdAt)) : 'Recently';
     const locationText = food.address || `${food.location.coordinates[1]}, ${food.location.coordinates[0]}`;
     
+    // Create photo HTML if photo exists
+    const photoHtml = food.photo ? 
+        `<div class="food-photo">
+            <img src="${food.photo}" alt="${typeof escapeHtml === 'function' ? escapeHtml(food.name) : food.name}" class="food-image" loading="lazy">
+        </div>` : '';
+    
     foodElement.innerHTML = `
-        <h3>${typeof escapeHtml === 'function' ? escapeHtml(food.name) : food.name}</h3>
-        <div class="food-meta">📍 ${typeof escapeHtml === 'function' ? escapeHtml(locationText) : locationText} • ${timeAgo}</div>
-        <div class="food-description">${typeof escapeHtml === 'function' ? escapeHtml(food.description) : food.description}</div>
-        <div class="food-contact">
-            <strong>Food Sharer:</strong> ${typeof escapeHtml === 'function' ? escapeHtml(food.contact) : food.contact}
-        </div>
-        <div class="food-actions">
-            <button class="cta-button" onclick="requestDeliveryForFood('${food._id}')">
-                📝 Request Delivery
-            </button>
+        ${photoHtml}
+        <div class="food-content">
+            <h3>${typeof escapeHtml === 'function' ? escapeHtml(food.name) : food.name}</h3>
+            <div class="food-meta">📍 ${typeof escapeHtml === 'function' ? escapeHtml(locationText) : locationText} • ${timeAgo}</div>
+            <div class="food-description">${typeof escapeHtml === 'function' ? escapeHtml(food.description) : food.description}</div>
+            <div class="food-contact">
+                <strong>Food Sharer:</strong> ${typeof escapeHtml === 'function' ? escapeHtml(food.contact) : food.contact}
+            </div>
+            <div class="food-actions">
+                <button class="cta-button" onclick="requestDeliveryForFood('${food._id}')">
+                    📝 Request Delivery
+                </button>
+            </div>
         </div>
     `;
     
@@ -201,8 +210,15 @@ function requestDeliveryForFood(foodId) {
     const escapedContact = typeof escapeHtml === 'function' ? escapeHtml(foodItem.contact) : foodItem.contact;
     const escapedAddress = typeof escapeHtml === 'function' ? escapeHtml(foodItem.address || 'See coordinates below') : (foodItem.address || 'See coordinates below');
     
+    // Create photo HTML if photo exists
+    const photoHtml = foodItem.photo ? 
+        `<div class="selected-food-photo">
+            <img src="${foodItem.photo}" alt="${escapedName}" class="selected-food-image" style="max-width: 150px; max-height: 150px; border-radius: 8px; margin-bottom: 10px;">
+        </div>` : '';
+    
     selectedFoodInfo.innerHTML = `
         <div class="selected-food-card">
+            ${photoHtml}
             <h4>${escapedName}</h4>
             <p><strong>Description:</strong> ${escapedDescription}</p>
             <p><strong>Food Sharer Contact:</strong> ${escapedContact}</p>

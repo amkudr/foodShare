@@ -293,6 +293,23 @@
                         <label for="foodName">Food Name *</label>
                         <input type="text" id="foodName" required>
                     </div>
+                    
+                    <!-- Photo Upload Section -->
+                    <div class="form-group">
+                        <label for="foodPhoto">Food Photo (optional)</label>
+                        <input type="file" id="foodPhoto" accept="image/*" onchange="handlePhotoUpload(event)">
+                        <small>Max size: 1MB. Supported formats: JPG, PNG, GIF, WebP</small>
+                        
+                        <!-- Photo Preview -->
+                        <div id="photoPreview" class="photo-preview" style="display: none;">
+                            <img id="previewImage" src="" alt="Photo preview" style="max-width: 200px; max-height: 200px; border-radius: 8px; margin-top: 10px;">
+                            <button type="button" class="remove-photo-btn" onclick="removePhoto()" style="margin-left: 10px;">Remove</button>
+                        </div>
+                        
+                        <!-- Hidden field to store base64 photo data -->
+                        <input type="hidden" id="photoData" value="">
+                    </div>
+                    
                     <div class="form-group">
                         <label for="location">Address/Location Description *</label>
                         <input type="text" id="location" required

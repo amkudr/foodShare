@@ -1,5 +1,79 @@
 // Food Management Functions
 
+// Photo handling functions
+function handlePhotoUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file size (max 1MB)
+    const maxSize = 1024 * 1024; // 1MB in bytes
+    if (file.size > maxSize) {
+        if (typeof showAlert === 'function') {
+            showAlert('Photo size must be less than 1MB. Please choose a smaller image.', 'error');
+        }
+        event.target.value = '';
+        return;
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+        if (typeof showAlert === 'function') {
+            showAlert('Please select a valid image file (JPG, PNG, GIF, or WebP).', 'error');
+        }
+        event.target.value = '';
+        return;
+    }
+
+    // Read file and convert to base64
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const base64Data = e.target.result;
+        
+        // Store the base64 data
+        document.getElementById('photoData').value = base64Data;
+        
+        // Show preview
+        showPhotoPreview(base64Data);
+    };
+    
+    reader.onerror = function() {
+        if (typeof showAlert === 'function') {
+            showAlert('Error reading the image file. Please try again.', 'error');
+        }
+    };
+    
+    reader.readAsDataURL(file);
+}
+
+function showPhotoPreview(base64Data) {
+    const preview = document.getElementById('photoPreview');
+    const previewImage = document.getElementById('previewImage');
+    
+    if (preview && previewImage) {
+        previewImage.src = base64Data;
+        preview.style.display = 'block';
+    }
+}
+
+function removePhoto() {
+    // Clear the file input
+    const fileInput = document.getElementById('foodPhoto');
+    if (fileInput) fileInput.value = '';
+    
+    // Clear the hidden base64 data
+    const photoDataInput = document.getElementById('photoData');
+    if (photoDataInput) photoDataInput.value = '';
+    
+    // Hide preview
+    const preview = document.getElementById('photoPreview');
+    if (preview) preview.style.display = 'none';
+    
+    // Clear preview image
+    const previewImage = document.getElementById('previewImage');
+    if (previewImage) previewImage.src = '';
+}
+
 // Load food items from server
 async function loadFoodItems() {
     try {
@@ -132,14 +206,23 @@ function createFoodElement(food, showDeliveryBtn = true) {
     const deliveryBtnHtml = showDeliveryBtn ?
         '<button class="delivery-btn" onclick="requestDelivery(\'' + food._id + '\')">🚚 Request Delivery</button>' : '';
 
+    // Create photo HTML if photo exists
+    const photoHtml = food.photo ? 
+        `<div class="food-photo">
+            <img src="${food.photo}" alt="${escapeHtml(food.name)}" class="food-image" loading="lazy">
+        </div>` : '';
+
     foodElement.innerHTML = `
-        <h3>${escapeHtml(food.name)}</h3>
-        <div class="food-meta">📍 ${escapeHtml(locationText)} • ${distanceHtml}${timeAgo}</div>
-        <div class="food-description">${escapeHtml(food.description)}</div>
-        <div class="food-actions">
-            <button class="contact-btn" onclick="contactOwner('${escapeHtml(food.contact)}')">Contact</button>
-            ${deliveryBtnHtml}
-            <button class="delete-btn" onclick="deleteFood('${food._id}')">Delete</button>
+        ${photoHtml}
+        <div class="food-content">
+            <h3>${escapeHtml(food.name)}</h3>
+            <div class="food-meta">📍 ${escapeHtml(locationText)} • ${distanceHtml}${timeAgo}</div>
+            <div class="food-description">${escapeHtml(food.description)}</div>
+            <div class="food-actions">
+                <button class="contact-btn" onclick="contactOwner('${escapeHtml(food.contact)}')">Contact</button>
+                ${deliveryBtnHtml}
+                <button class="delete-btn" onclick="deleteFood('${food._id}')">Delete</button>
+            </div>
         </div>
     `;
 
@@ -153,6 +236,7 @@ function toggleAddForm() {
         modal.style.display = "none";
         // Clear form when closing
         document.querySelector('#addFoodModal form').reset();
+        removePhoto(); // Clear photo preview and data
         clearAlert();
     } else {
         modal.style.display = "block";
@@ -165,13 +249,16 @@ async function addFood(event) {
 
     try {
         // Get form data
+        const photoData = document.getElementById('photoData').value;
+        
         const foodData = {
             name: document.getElementById('foodName').value.trim(),
             location: document.getElementById('location').value.trim(),
             contact: document.getElementById('contact').value.trim(),
             description: document.getElementById('description').value.trim(),
             latitude: parseFloat(document.getElementById('latitude').value),
-            longitude: parseFloat(document.getElementById('longitude').value)
+            longitude: parseFloat(document.getElementById('longitude').value),
+            photo: photoData || null // Include photo data if available
         };
 
         // Validate form data
@@ -179,6 +266,23 @@ async function addFood(event) {
             showAlert('Please fill in all required fields including coordinates.', 'error');
             return;
         }
+
+        // Validate photo size if present
+        if (photoData) {
+            const sizeInBytes = (photoData.length * 3) / 4;
+            const maxSizeInBytes = 1024 * 1024; // 1MB
+            
+            if (sizeInBytes > maxSizeInBytes) {
+                showAlert('Photo size is too large. Please choose a smaller image (max 1MB).', 'error');
+                return;
+            }
+        }
+
+        // Show loading state
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Uploading...';
+        submitBtn.disabled = true;
 
         // Send to server
         const response = await fetch(`${API_BASE_URL}/food-items`, {
@@ -201,6 +305,7 @@ async function addFood(event) {
 
         // Reset form and hide modal
         event.target.reset();
+        removePhoto(); // Clear photo preview
         toggleAddForm();
 
         // Show success message
@@ -209,6 +314,13 @@ async function addFood(event) {
     } catch (error) {
         console.error('Error adding food:', error);
         showAlert(error.message || 'Failed to share food item. Please try again.', 'error');
+    } finally {
+        // Reset button state
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.textContent = 'Share Food';
+            submitBtn.disabled = false;
+        }
     }
 }
 
